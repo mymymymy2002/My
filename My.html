@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>애기미의 편지</title>
+
+<style>
+body {
+  margin:0;
+  padding:20px;
+  text-align:center;
+  font-family:sans-serif;
+}
+
+.page { display:none; }
+.active { display:block; }
+
+.title { font-size:28px; }
+
+.subtitle {
+  color:#666;
+  margin-bottom:20px;
+}
+
+button {
+  width:80%;
+  max-width:300px;
+  padding:15px;
+  margin:10px;
+  font-size:18px;
+  border:none;
+  border-radius:10px;
+  background:#ff6b81;
+  color:white;
+}
+
+input {
+  width:80%;
+  padding:12px;
+  font-size:16px;
+}
+
+/* 게임 영역 안정화 */
+#gameArea {
+  width:250px;
+  height:250px;
+  border:1px solid #ccc;
+  margin:20px auto;
+  position:relative;
+  overflow:hidden;
+}
+
+/* 하트 버튼 */
+.heartBtn {
+  position:absolute;
+  font-size:30px;
+}
+
+/* 선물 */
+#giftArea {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  width:250px;
+  margin:20px auto;
+}
+
+.gift { font-size:30px; }
+
+/* 폭발 */
+.explode {
+  position:fixed;
+  font-size:20px;
+  animation:explode 1s forwards;
+  pointer-events:none;
+}
+
+@keyframes explode {
+  to {
+    transform:translate(var(--x),var(--y));
+    opacity:0;
+  }
+}
+
+/* 계약서 */
+#contractBox {
+  margin-top:20px;
+  padding:20px;
+  border:2px solid #333;
+  border-radius:10px;
+  display:none;
+  width:300px;
+  margin:auto;
+}
+
+/* 편지 */
+#letter {
+  margin-top:20px;
+  padding:20px;
+  background:#fff0f5;
+  border-radius:10px;
+  min-height:120px;
+}
+
+/* 하트 비 */
+.heart {
+  position:fixed;
+  top:-20px;
+  font-size:20px;
+  animation:fall 3s linear forwards;
+}
+
+@keyframes fall {
+  to {
+    transform:translateY(100vh);
+    opacity:0;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<!-- 시작 -->
+<div id="start" class="page active">
+  <h1 class="title">💌 애기미의 편지</h1>
+  <p class="subtitle">
+    애기미의 편지는 쉽게 볼 수 없지<br>
+    5개의 미션을 통해 자격을 증명해봐💖
+  </p>
+  <button onclick="go('m1')">시작하기</button>
+</div>
+
+<!-- 미션1 -->
+<div id="m1" class="page">
+  <h3>💘 미션 1: 애기미의 마음을 얻어라</h3>
+  <p>3초 안에 하트를 잡아라!</p>
+  <button onclick="startM1()">시작</button>
+  <button id="retryM1" style="display:none;" onclick="startM1()">다시하기</button>
+  <div id="gameArea"></div>
+  <p id="m1Result"></p>
+</div>
+
+<!-- 미션2 -->
+<div id="m2" class="page">
+  <h3>🧠 미션 2: 기억해봐 ㅋ</h3>
+  <p>단어를 순서대로 기억해서 입력해!</p>
+  <button onclick="startM2()">시작</button>
+  <button id="retryM2" style="display:none;" onclick="startM2()">다시하기</button>
+  <p id="m2Display"></p>
+  <input id="m2Input">
+  <button onclick="checkM2()">확인</button>
+  <p id="m2Result"></p>
+</div>
+
+<!-- 미션3 -->
+<div id="m3" class="page">
+  <h3>🎁 미션 3: 애기미 선물 테스트</h3>
+  <p>애기미에게 주고 싶은 선물을 골라봐!</p>
+
+  <button onclick="startM3()">시작</button>
+  <button id="retryM3" style="display:none;" onclick="startM3()">다시하기</button>
+
+  <div id="giftArea"></div>
+  <p id="m3Result"></p>
+</div>
+
+<!-- 미션4 -->
+<div id="m4" class="page">
+  <h3>🔮 미션 4: 미래 점쟁이</h3>
+  <p>미래에 애기미는 누구랑 결혼할까?</p>
+
+  <button onclick="startM4()">시작</button>
+  <button id="retryM4" style="display:none;" onclick="startM4()">다시하기</button>
+
+  <div id="m4Area"></div>
+  <p id="m4Result"></p>
+</div>
+
+<!-- 미션5 -->
+<div id="m5" class="page">
+  <h3>📜 미션 5: 계약서</h3>
+  <p>마지막 관문이다...</p>
+
+  <button onclick="openContract()">계약서 보기</button>
+
+  <div id="contractBox">
+    <p>
+      나 <b>임형묵</b>은 평생 애기미만을 위해<br>
+      이 한 몸 바칠 것을 맹세합니다.
+    </p>
+
+    <input type="text" id="sign" placeholder="이름 입력">
+    <button onclick="checkM5()">서명하기</button>
+
+    <p id="m5Result"></p>
+    <button id="retryM5" style="display:none;" onclick="resetM5()">다시하기</button>
+  </div>
+</div>
+
+<!-- 완료 -->
+<div id="letterPage" class="page">
+  <h3>💌 애기미의 편지</h3>
+  <div id="letter"></div>
+</div>
+
+<script>
+
+function go(id){
+  document.querySelector(".active").classList.remove("active");
+  document.getElementById(id).classList.add("active");
+}
+
+function success(next){
+  explode();
+  setTimeout(()=>{
+    go(next);
+    if(next === "letterPage") startTyping();
+  },800);
+}
+
+/* 미션1 */
+let m1Playing=false;
+
+function startM1(){
+  const area=document.getElementById("gameArea");
+  const result=document.getElementById("m1Result");
+  const retry=document.getElementById("retryM1");
+
+  area.innerHTML="";
+  result.innerText="";
+  retry.style.display="none";
+
+  let h=document.createElement("div");
+  h.innerText="💖";
+  h.className="heartBtn";
+
+  m1Playing=true;
+
+  let interval=setInterval(()=>{
+    h.style.left=Math.random()*200+"px";
+    h.style.top=Math.random()*200+"px";
+  },300);
+
+  h.onclick=()=>{
+    m1Playing=false;
+    clearInterval(interval);
+    success("m2");
+  };
+
+  area.appendChild(h);
+
+  setTimeout(()=>{
+    if(!m1Playing) return;
+    m1Playing=false;
+    clearInterval(interval);
+    result.innerText="다시 도전!";
+    retry.style.display="block";
+  },3000);
+}
+
+/* 미션2 */
+const words=["오빠는","애기미","제일","사랑해"];
+let idx=0,speed=2000;
+
+function startM2(){
+  idx=0; speed=2000;
+  document.getElementById("m2Result").innerText="";
+  document.getElementById("retryM2").style.display="none";
+  show();
+}
+
+function show(){
+  document.getElementById("m2Display").innerText=words[idx];
+  idx++;
+
+  speed *= 0.75;
+  if(speed < 400) speed = 400;
+
+  if(idx < words.length){
+    setTimeout(show,speed);
+  }
+}
+
+function checkM2(){
+  let input=document.getElementById("m2Input").value.replace(/\s/g,"");
+  if(input===words.join("")){
+    success("m3");
+  } else {
+    document.getElementById("m2Result").innerText="다시!";
+    document.getElementById("retryM2").style.display="block";
+  }
+}
+
+/* 미션3 */
+function startM3(){
+  const arr=["🎁","🍫","🌹","🧸","🍰","🎧","📱","🍕","💸"];
+  arr.sort(()=>Math.random()-0.5);
+
+  let area=document.getElementById("giftArea");
+  area.innerHTML="";
+  document.getElementById("retryM3").style.display="none";
+
+  arr.forEach(e=>{
+    let d=document.createElement("div");
+    d.innerText=e;
+    d.className="gift";
+
+    d.onclick=()=>{
+      if(e==="💸") success("m4");
+      else {
+        document.getElementById("m3Result").innerText="다시!";
+        document.getElementById("retryM3").style.display="block";
+      }
+    };
+
+    area.appendChild(d);
+  });
+}
+
+/* 미션4 */
+function startM4(){
+  const arr=["김철수","이민수","임형묵","박영희"];
+  arr.sort(()=>Math.random()-0.5);
+
+  let area=document.getElementById("m4Area");
+  area.innerHTML="";
+  document.getElementById("retryM4").style.display="none";
+
+  arr.forEach(n=>{
+    let b=document.createElement("button");
+    b.innerText=n;
+
+    b.onclick=()=>{
+      if(n==="임형묵") success("m5");
+      else {
+        document.getElementById("m4Result").innerText="아님";
+        document.getElementById("retryM4").style.display="block";
+      }
+    };
+
+    area.appendChild(b);
+  });
+}
+
+/* 계약서 */
+function openContract(){
+  document.getElementById("contractBox").style.display="block";
+}
+
+function checkM5(){
+  let v=document.getElementById("sign").value.trim();
+  if(v==="임형묵"){
+    success("letterPage");
+    explode();
+  } else {
+    document.getElementById("m5Result").innerText="다시";
+    document.getElementById("retryM5").style.display="block";
+  }
+}
+
+function resetM5(){
+  document.getElementById("sign").value="";
+}
+
+/* 폭발 */
+function explode(){
+  for(let i=0;i<12;i++){
+    let h=document.createElement("div");
+    h.innerText="💖";
+    h.className="explode";
+    h.style.setProperty("--x",(Math.random()*300-150)+"px");
+    h.style.setProperty("--y",(Math.random()*300-150)+"px");
+    h.style.left="50%";
+    h.style.top="50%";
+    document.body.appendChild(h);
+    setTimeout(()=>h.remove(),1000);
+  }
+}
+
+/* 편지 */
+const msg=`오빠미에게... 😳
+
+오빠미 이번에 오빠 생일날 기억 남게 해줄려고 
+열심히 노력했어 ㅎㅎ
+
+잘 만들었지? 
+
+기억에 남을려나? ㅎㅎ
+
+오빠생일 축하해
+
+난 항상 오빠랑 노는게 너무 좋고 행복해
+특히 오빠랑 맛있는거 먹고 놀때가 제일 재미있는듯ㅋㅋㅋ
+
+술 마시고 여행 다니고
+
+평생 이렇게 살아도 재미있을 것 같아
+
+오빠 내가 많이 사랑하는거 알지?
+
+앞으로 싸우지말고 오늘 즐겁게 보내보쟝
+
+여기까지 해줘서 고맙고,
+앞으로도 잘 부탁해 💖 
+
+-애기미가-`
+;
+
+let i=0;
+function startTyping(){
+  i=0;
+  let l=document.getElementById("letter");
+  l.innerHTML="";
+
+  function t(){
+    if(i<msg.length){
+      l.innerHTML += (msg[i]==="\n"?"<br>":msg[i]);
+      i++;
+      setTimeout(t,50);
+    }
+  }
+  t();
+}
+
+</script>
+</body>
+</html>
